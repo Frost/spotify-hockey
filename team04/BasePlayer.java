@@ -1,19 +1,20 @@
 package team04;
 
 import java.util.Random;
+
 import hockey.api.*;
 
 public abstract class BasePlayer extends Player {
 	// The middle of the opponents goal, on the goal line
-	protected static final Position GOAL_POSITION = new Position(2600, 0);
+	public static final Position GOAL_POSITION = new Position(2600, 0);
 	protected static final Position HOME_GOAL_POSITION = new Position(-2600, 0);
 	protected static final int SHOT_CAREFULNESS = 5;
 	protected static final int PASS_SPEED = 2222;
 	private static final Position ORIGO = new Position(0,0);
 	private static final int CENTER_PLAYER = 5;
 	
-	protected boolean isFaceOff = true;
-	protected boolean isPenaltyShot = false;
+	protected static boolean isFaceOff = false;
+	protected static boolean isPenaltyShot = false;
 
 	// Left handed?
 	public boolean isLeftHanded() { return false; }
@@ -69,7 +70,7 @@ public abstract class BasePlayer extends Player {
 		}
 	}
 
-	protected boolean puckIsHeldByOwnTeam() {
+	public boolean puckIsHeldByOwnTeam() {
 		return getPuck().isHeld() && getPuck().getHolder().getIndex() < 6;
 	}
 
@@ -80,7 +81,7 @@ public abstract class BasePlayer extends Player {
 	/**
 	 * Shoot towards opposing goal, with x-position deviating between +85 and -85 from 0 
 	 */
-	protected void shootToScore() {	
+	public void shootToScore() {	
 		int yTarget = (((new Random().nextInt(2) * -2 ) + 1 ) * 85) + GOAL_POSITION.getY();
 		if (clearShot(yTarget, GOAL_POSITION.getY())){
 			shoot(GOAL_POSITION.getX(), yTarget, MAX_SHOT_SPEED);
@@ -92,7 +93,7 @@ public abstract class BasePlayer extends Player {
 	/*
 	 * see below.
 	 */
-	protected boolean clearShot(int x, int y){
+	public boolean clearShot(int x, int y){
 		return clearShot(new Position(x, y));
 	}
 	/*
@@ -111,7 +112,7 @@ public abstract class BasePlayer extends Player {
 	 * 
 	 * @return true if the holder of the puch is closer to goal than *this*. Nullpointer if no puck holder.
 	 */
-	protected boolean puckIsCloserToHomeGoal() {
+	public boolean puckIsCloserToHomeGoal() {
 		if(getPuck().isHeld()){
 			return Util.dist2(HOME_GOAL_POSITION, getPuck().getHolder()) > Util.dist2(HOME_GOAL_POSITION, this);
 		}else{
@@ -120,16 +121,16 @@ public abstract class BasePlayer extends Player {
 
 	}
 
-	protected boolean isBehindOpposingGoal() {
+	public boolean isBehindOpposingGoal() {
 		boolean isBehindOpposingGoal = getX() > GOAL_POSITION.getX();
 		return isBehindOpposingGoal;
 	}
 
-	protected boolean isInOffensiveZone() {
+	public boolean isInOffensiveZone() {
 		return getX() > 900;
 	}
 
-	protected void smartSkate(IObject target, int speed){
+	public void smartSkate(IObject target, int speed){
 		int ANGULAR_WEIGHT = 5; // How important is an error in heading? larger numbers make players slow down more to correct heading.
 		int DISTANCE_WEIGHT = 100;  // what does a player consider "close" in cm.   smaller numbers will make players go faster closer.
  		
@@ -156,7 +157,7 @@ public abstract class BasePlayer extends Player {
 		}
 	}
 
-	protected void smartSkate(int x, int y, int speed){
+	public void smartSkate(int x, int y, int speed){
 		smartSkate(new Position(x,y),speed);
 	}
 	
@@ -164,7 +165,7 @@ public abstract class BasePlayer extends Player {
 		
 	}
 	
-	protected void defaultSkate(int speed){
+	public void defaultSkate(int speed){
 		if(Util.dist2(getDefaultPosition(), this) < 300){
 			turn(getPuck(), MAX_TURN_SPEED);
 		}
@@ -172,7 +173,7 @@ public abstract class BasePlayer extends Player {
 	}
 		
 
-	protected void pass(int playerIndex) {
+	public void pass(int playerIndex) {
 		pass(getPlayer(playerIndex));
 	}
 
@@ -180,7 +181,7 @@ public abstract class BasePlayer extends Player {
 		shoot(Util.collisionHeading(player, getPuck(), PASS_SPEED), PASS_SPEED);
 	}
 
-	protected void chasePuck() {
+	public void chasePuck() {
 		int speed = MAX_SPEED;
 		if (Util.dist(this, getPuck()) < MAX_STICK_R) {
 			moveStick(MIN_STICK_ANGLE, MIN_STICK_R);
@@ -194,33 +195,32 @@ public abstract class BasePlayer extends Player {
 
 
 		turn(Util.collisionHeading(getPuck(), this, MAX_SPEED), MAX_TURN_SPEED);
-		skate(MAX_SPEED);
+		skate(speed);
 	}
 
-	protected void passAForward() {
+	public void passAForward() {
 		pass(new Random().nextInt(2) + 3);
 	}
-	protected void charge() {
-		if (!hasPuck()) {
-			moveStick(MIN_STICK_ANGLE, 0);
+
+	public Position getDefensivePosition() {
+		int dx = getPuck().getX() - HOME_GOAL_POSITION.getX();
+		int dy = getPuck().getY() - HOME_GOAL_POSITION.getY();
+		double factor = Math.hypot(dx, dy) / 600;
+		
+		if (dx < HOME_GOAL_POSITION.getX()) {
+			dx = HOME_GOAL_POSITION.getX();
 		}
-		if (isInOffensiveZone()) {
-			IPlayer goalie = getPlayer(6);
-			int yTarget = GOAL_POSITION.getY();
-			if (goalie.getStickY() > 0) {
-				yTarget -= 85;
-			} else {
-				yTarget += 85;
-			}
-			
-			if (clearShot(yTarget, GOAL_POSITION.getY())){
-				shoot(GOAL_POSITION.getX(), yTarget, MAX_SHOT_SPEED);
-			} else {
-				pass(CENTER_PLAYER);
-			}
-		} else {
-			smartSkate(GOAL_POSITION, MAX_SPEED);
-		}
+		
+		Position target = new Position((int)(HOME_GOAL_POSITION.getX() + dx/factor), (int)(dy/factor));
+		return target;
+	}
+
+	public void setIsFaceOff(boolean faceOff) {
+		isFaceOff = faceOff;		
+	}
+
+	public boolean getIsFaceOff() {
+		return isFaceOff;
 	}
 
 }

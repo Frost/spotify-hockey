@@ -2,12 +2,17 @@ package team04;
 
 import java.util.Random;
 
+import team04.strategies.DefaultGoalieStrategy;
+import team04.strategies.GoaliePenaltyStrategy;
+
 import hockey.api.GoalKeeper;
 import hockey.api.Position;
 
 public class Goalie extends GoalKeeper {
 	// Middle of our own goalcage, on the goal line
 	protected static final Position HOME_GOAL_POSITION = new Position(-2600, 0);
+	
+	private boolean isPenaltyShots = false;
 
 	private String[] possibleNames = {
 			"Joey Pardella",
@@ -34,20 +39,21 @@ public class Goalie extends GoalKeeper {
 	public void faceOff() { }
 
 	// Called when the goalie is about to receive a penalty shot
-	public void penaltyShot() { }
+	public void penaltyShot() {
+		isPenaltyShots = true;
+		skate(0, -2500, 0);
+	}
 
 	// Intelligence of goalie.
 	public void step() {
-		setMessage(new Integer(MAX_SPEED).toString());
-		if (hasPuck()) {
-			shoot(getPlayer(5), MAX_THROW_SPEED);
-		} else {			
-			skate(calculateTargetPosition(), 150);
-			turn(getPuck(), MAX_TURN_SPEED);
+		if (isPenaltyShots) {
+			GoaliePenaltyStrategy.act(this, getPuck());
+		} else {
+			DefaultGoalieStrategy.act(this, getPuck());
 		}
 	}
 
-	private Position calculateTargetPosition() {
+	public Position calculateTargetPosition() {
 		int dx = getPuck().getX() - HOME_GOAL_POSITION.getX() + 20;
 		int dy = getPuck().getY() - HOME_GOAL_POSITION.getY();
 		double factor = Math.hypot(dx, dy) / 125;

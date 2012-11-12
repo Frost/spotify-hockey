@@ -1,6 +1,7 @@
 package team04;
 
-import hockey.api.Util;
+import team04.strategies.ChargeStrategy;
+import team04.strategies.DefaultCenterStrategy;
 
 public class Center extends BasePlayer {
 	// Number of center player
@@ -9,35 +10,13 @@ public class Center extends BasePlayer {
 	// Center player's intelligence
 	public void step() {
 		if (isPenaltyShot) {
-			charge();
+			ChargeStrategy.act(this, getPuck());
 		} else {
 			if (isFaceOff) {
-				setMessage(new Boolean(hasPuck()).toString());
-				if (hasPuck()) {
-					passAForward();
-					isFaceOff = false;
-				}
-				
+				DefaultCenterStrategy.act(this, getPuck());
 			}
-			if (offend()){
-				if (hasPuck()){
-					if(Util.dist(getPlayer(5), getPlayer(6)) < 1500)
-						shootToScore();
-					else {
-						smartSkate(GOAL_POSITION, MAX_SPEED);
-					}
-							
-				}
-				else
-					defaultSkate(1000);
-			}
-			else
-				if(Util.dist(getPuck(), getDefaultPosition()) < 1000)
-					smartSkate(getPuck(), 1000);
-				else
-					defaultSkate(1000);
-
-			}
+			DefaultCenterStrategy.act(this, getPuck());
 		}
 	}
+}
 

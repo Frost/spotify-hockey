@@ -1,6 +1,7 @@
 package team04;
 
-import hockey.api.*;
+import team04.strategies.ChargeStrategy;
+import team04.strategies.DefaultDefendStrategy;
 
 public class Defender extends BasePlayer {
 	// Number of defender
@@ -21,43 +22,11 @@ public class Defender extends BasePlayer {
 	// Defender intelligence
 	public void step() {
 		if (isPenaltyShot) {
-			charge();
+			ChargeStrategy.act(this, getPuck());
 		} else {
-			if(offend()){
-				if(hasPuck()){
-					pass(5);
-				}else{
-					defaultSkate(1000);
-				}
-			}else{
-				if(getPuck().isHeld()){
-					if(puckIsCloserToHomeGoal()){
-						chasePuck();
-					}else{
-						smartSkate(getDefensivePosition(), MAX_SPEED);
-					}
-				}else{
-					if(hasPuck()){
-						pass(5);
-					}else{
-						chasePuck();
-					}
-				}
-			}
+			DefaultDefendStrategy.act(this, getPuck());
 		}
 		
 	}
 
-	private Position getDefensivePosition() {
-		int dx = getPuck().getX() - HOME_GOAL_POSITION.getX();
-		int dy = getPuck().getY() - HOME_GOAL_POSITION.getY();
-		double factor = Math.hypot(dx, dy) / 600;
-		
-		if (dx < HOME_GOAL_POSITION.getX()) {
-			dx = HOME_GOAL_POSITION.getX();
-		}
-		
-		Position target = new Position((int)(HOME_GOAL_POSITION.getX() + dx/factor), (int)(dy/factor));
-		return target;
-	}
 }

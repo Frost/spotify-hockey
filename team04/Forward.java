@@ -1,6 +1,7 @@
 package team04;
 
-import java.security.acl.Owner;
+import team04.strategies.ChargeStrategy;
+import team04.strategies.DefaultForwardStrategy;
 
 public class Forward extends BasePlayer {
 	// Number of forward
@@ -16,25 +17,10 @@ public class Forward extends BasePlayer {
 	// Intelligence of forward
 	public void step() {
 		if (isPenaltyShot)
-			charge();
+			ChargeStrategy.act(this, getPuck());
 		else {
-			if (hasPuck()) {
-				if (isBehindOpposingGoal()) {
-					smartSkate(GOAL_POSITION.getX() - 200, GOAL_POSITION.getY(), MAX_SPEED);
-				} else {
-					charge();
-				}
-							
-			} else if(isFaceOff){
-				isFaceOff = false;		
-			}else if (puckIsHeldByOwnTeam()) {
-				defaultSkate(3000);
-			} else {
-				chasePuck();
-			}
-
+			DefaultForwardStrategy.act(this, getPuck());
 		}
-		
 	}
 
 }
